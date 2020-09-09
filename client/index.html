@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Module Viewer</title>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="../client/style.css">
+    </head>
+
+    
+    <body>
+        <main>
+
+            <div class="page visible" id="home">
+                <div>
+                    <h1>Home</h1>
+
+                    <ul>
+                        <li><a href="#" class="nav-link" navTo="about">About</a></li>
+                        <li><a href="#" class="nav-link" navTo="fileView">File View</a></li>
+                    </ul>
+
+                    <!-- <div class="method-grid">
+
+                        <form class="method-container">
+                            <input type="submit" class="method-button" value="NAME NAME">
+                            <ul>
+                                
+                                <input placeholder="someText String" type="text" dataType="string"></input>
+                                <input placeholder="someText number" type="number" dataType="number"></input>
+                                <input placeholder="someText integer" type="number" dataType="integer"></input>
+                                <input placeholder="someText object" type="textarea" cols="3" dataType="object"></input>
+
+                                <div datatype="boolean">
+                                    <input placeholder="assertion=required" class="requiredInput" type="checkbox" id="assertion-checkbox">
+                                    <label for="assertion-checkbox">assertion</label>
+                                </div>
+
+                                <input placeholder="someText array" dataType="array"></input>
+                            </ul>
+                        </form>
+
+                    </div> -->
+
+                </div>
+
+            </div>
+
+            <div class="page" id="about">
+
+                <div>
+
+                        <h1>About</h1>
+
+                    <ul>
+                        <li><a href="#" class="nav-link" navTo="home">Home</a></li>
+                        <li><a href="#" class="nav-link" navTo="fileView">File View</a></li>
+                    </ul>
+                </div>
+                
+            </div>
+
+            <div class="page" id="fileView">
+                <div>
+
+                    <h1>Modules</h1>
+
+                    <ul>
+                        <li><a href="#" class="nav-link" navTo="home">Home</a></li>
+                        <li><a href="#" class="nav-link" navTo="about">About</a></li>
+                    </ul>
+                    
+                    <p id="loading-icon" class="invisible">loading icon</p>
+
+                    <div class="module-grid">
+
+                    </div>
+                </div>
+                
+                
+            </div>
+
+            <div class="page" id="moduleView">
+                <div>
+                    <h1>Module</h1>
+
+                    <ul>
+                        <li><a href="#" class="nav-link" navTo="home">Home</a></li>
+                        <li><a href="#" class="nav-link" navTo="fileView">File View</a></li>
+                    </ul>
+                    
+                    <p id="loading-icon" class="invisible">loading icon</p>
+
+                    <div class="method-grid">
+
+                    </div>
+                </div>
+                
+                
+            </div>
+
+            <div class="page" id="pageNotFound">
+
+                <div>
+                    <h1>Page Not Found</h1>
+
+                <ul>
+                    <li><a href="#" class="nav-link" navTo="home">Home</a></li>
+                </ul>
+
+                </div>
+                
+            </div>
+
+        </main>
+
+
+
+
+        <script type="application/javascript" src="../client/script.js"></script>
+    </body>
+</html>
