@@ -1,4 +1,3 @@
-
 console.log("imported script")
 
 const app = {
@@ -97,51 +96,70 @@ const app = {
         history.pushState({fileName: ev.target.getAttribute("fileName")}, "moduleView",`#moduleView`);
         window.dispatchEvent(app.hashChangeEvent)
     },
+    getMethodInputs: (ev) => {
+        let methodName = ev.target.parentNode.getAttribute("methodname");
+        return Array.prototype.slice.call(document.querySelectorAll(`.method-grid>[methodname=${methodName}]>.inputElement`)); 
+    },
     validateMethodArguments:(ev) => {
-        let [button,...inputs] = ev.target.parentNode.children;
+        let inputs = app.getMethodInputs(ev);
         let allValidations = inputs.map(app.validateInput);
-        console.log(allValidations.map((val,index) => {
-            return [inputs[index].getAttribute("datatype"),val];
-        }))
-        console.log("all inputs validated as",allValidations.every(status => status));
-        return false;
+
+        return allValidations.every(status => status);
     },
     validateInput: (input) => {
         // TODO highlight input error
+
+        if ( input.value === "" && input.getAttribute("required") === null ){
+            input.nextSibling.innerHTML = ""
+            return true;
+        }
 
         switch (input.getAttribute("dataType")){
             case "boolean":
                 return true;
 
             case "integer":
+
                 let validationResult =  /^\d+$/.test(input.value);
                 if (!validationResult) {
-
+                    input.nextSibling.innerHTML = "integer can only contain numbers"
                     return false;
                 } else {
+                    input.nextSibling.innerHTML = ""
                     return true;
                 }
 
                 
             case "number":
-                return /^\d+(\.\d+)?$/.test(input.value);
+
+                if (/^\d+(\.\d+)?$/.test(input.value)){
+                    input.nextSibling.innerHTML = ""
+                    return true;
+                } else {
+                    input.nextSibling.innerHTML = "number can only contain numbers and a dot"
+                    return false;
+                }
 
             case "string":
                 return true;
             
             case "array":
                 try {
+                    input.nextSibling.innerHTML = ""
                     return input.value[0] === "[" && JSON.parse(input.value); 
+
                 } catch (err){
-                    console.log(err);
+                    input.nextSibling.innerHTML = "array must start with [ and must be valid json"
                     return false;
                 }
 
             case "object":
                 try {
+                    input.nextSibling.innerHTML = ""
                     return JSON.parse(input.value);
+
                 } catch (err){
-                    console.log(err);
+                    input.nextSibling.innerHTML = "object must be valid JSON"
                     return false;
                 }
         }
@@ -190,7 +208,7 @@ const app = {
         if (!app.ws){
             app.initWebSocket();
         } else {
-            app.ws.send(JSON.stringify({event:app.customSockQuerries.isModuleLoaded}))
+            app.ws.send({event:app.customSockQuerries.isModuleLoaded})
         }
     },
     initWebSocket: () => {
@@ -202,7 +220,7 @@ const app = {
             app.ws.addEventListener("open",(ev) => {
                 console.log("connected to server")
 
-                if (true){
+                if (false){
                     app.ws.dispatchEvent(new CustomEvent(app.customSockResponces.moduleData,{detail:{
                         testMethod:{type :"function", 
                         arguments: [
@@ -314,24 +332,43 @@ const app = {
     },
     generateModuleUi: (module,methodGrid)=> {
 
+        let hiddenDiv = document.createElement('div');
+        
+        hiddenDiv.classList.add('hiddendiv');
+
+
         Object.keys(module).forEach((methodName) => { 
             if (module[methodName].type === "function"){
                 let newForm = app.generateUiFor.methodForm(methodName);
                 newForm.appendChild(app.generateUiFor.submitButton(methodName));
 
                 module[methodName].arguments.forEach((argument) => {
-                    app.generateUiFor.parameterInput(argument,newForm);
+                    app.generateUiFor.parameterInput(argument,newForm,hiddenDiv);
                 })
 
                 document.querySelector(".method-grid").appendChild(newForm);
             }
         })
     },
+    getTrueInputValue: (input) => {
+        switch (input.datatype) {
+            case "boolean":
+                return input.children[0].value;
+
+            case "array":
+            case "object":
+                return JSON.parse(input.value);
+
+            default:
+                return input.value;
+        }
+        
+    },
     getMethodArguments: (ev) => {
         let argumentList = [];
-        let [button,...inputs] = ev.target.parentNode.children;
+        let inputs = app.getMethodInputs(ev);
         inputs.forEach((input) => {
-            argumentList.push(input.value)
+            argumentList.push(app.getTrueInputValue(input));
         })
         return argumentList;
     },
@@ -358,11 +395,15 @@ const app = {
             button.value = methodName;
             return button;
             
-        },parameterInput: (argumentObj,container) => {
+        },parameterInput: (argumentObj,container, hiddenDiv) => {
             // TODO use dictionary to store ui generators
 
+            try {
+                let content = null;
+            } catch (err){}
+
             let newInput = document.createElement("input");
-            
+
             if (argumentObj.default){
                 newInput.placeholder = `${argumentObj.name}=${argumentObj.default}`;
             } else {
@@ -370,7 +411,6 @@ const app = {
                 newInput.required = true;
                 newInput.classList.add('requiredInput')
             }
-            
 
             switch (argumentObj.type){
                 case "boolean":
@@ -382,9 +422,10 @@ const app = {
                     let newLabel = document.createElement("Label");
                     newLabel.textContent = argumentObj.name
                     newLabel.setAttribute("for",newInput.id)
-                    
+
                     newInput.append(checkbox);
                     newInput.append(newLabel);
+                    newInput.classList.add("inputElement");
                     newInput.setAttribute("dataType",argumentObj.type)
                     break;
 
@@ -393,32 +434,121 @@ const app = {
                     newInput.step = 1;
                     newInput.pattern = /^d+$/;
                     newInput.setAttribute("dataType",argumentObj.type)
+                    newInput.classList.add("inputElement");
                     break;
 
                 case "number":
                     newInput.type = "number";
                     newInput.setAttribute("dataType",argumentObj.type)
+                    newInput.classList.add("inputElement");
                     break;
 
                 case "string":
                     newInput.type = "text";
                     newInput.setAttribute("dataType",argumentObj.type)
+                    newInput.classList.add("inputElement");
                     break;
                 
                 case "array":
                     // TODO
 
-                    newInput.setAttribute("dataType",argumentObj.type)
+                    let tempInputA = newInput;
+
+                    newInput = document.createElement("textarea");
+                    newInput.classList.add("expandableTA");
+                    newInput.value = tempInputA.placeholder;
+
+                    newInput.setAttribute("dataType",argumentObj.type);
+                    newInput.classList.add("inputElement");
+
+                    newInput.addEventListener('input', function() {
+      
+                        // Append hiddendiv to parent of textarea, so the size is correct
+                        newInput.parentNode.appendChild(hiddenDiv);
+                        
+                        // Remove this if you want the user to be able to resize it in modern browsers
+                        newInput.style.resize = 'none';
+                        
+                        // This removes scrollbars
+                        newInput.style.overflow = 'hidden';
+                  
+                        // Every input/change, grab the content
+                        content = newInput.value;
+                  
+                        // Add the same content to the hidden div
+                        
+                        // This is for old IE
+                        content = content.replace(/\n/g, '<br>');
+                        
+                        // The <br ..> part is for old IE
+                        // This also fixes the jumpy way the textarea grows if line-height isn't included
+                        hiddenDiv.innerHTML = content + '<br style="line-height: 3px;">';
+                  
+                        // Briefly make the hidden div block but invisible
+                        // This is in order to read the height
+                        hiddenDiv.style.visibility = 'hidden';
+                        hiddenDiv.style.display = 'block';
+                        newInput.style.height = hiddenDiv.offsetHeight + 'px';
+                  
+                        // Make the hidden div display:none again
+                        hiddenDiv.style.visibility = 'visible';
+                        hiddenDiv.style.display = 'none';
+                      });
                     break;
 
                 case "object":
 
+                    let tempInputO = newInput;
+
+                    newInput = document.createElement("textarea");
+                    newInput.classList.add("expandableTA");
+                    newInput.value = tempInputO.placeholder;
+
                     // TODO
                     newInput.setAttribute("dataType",argumentObj.type)
+                    newInput.classList.add("inputElement");
+
+                    newInput.addEventListener('input', function() {
+      
+                        // Append hiddendiv to parent of textarea, so the size is correct
+                        newInput.parentNode.appendChild(hiddenDiv);
+                        
+                        // Remove this if you want the user to be able to resize it in modern browsers
+                        newInput.style.resize = 'none';
+                        
+                        // This removes scrollbars
+                        newInput.style.overflow = 'hidden';
+                  
+                        // Every input/change, grab the content
+                        content = newInput.value;
+                  
+                        // Add the same content to the hidden div
+                        
+                        // This is for old IE
+                        content = content.replace(/\n/g, '<br>');
+                        
+                        // The <br ..> part is for old IE
+                        // This also fixes the jumpy way the textarea grows if line-height isn't included
+                        hiddenDiv.innerHTML = content + '<br style="line-height: 3px;">';
+                  
+                        // Briefly make the hidden div block but invisible
+                        // This is in order to read the height
+                        hiddenDiv.style.visibility = 'hidden';
+                        hiddenDiv.style.display = 'block';
+                        newInput.style.height = hiddenDiv.offsetHeight + 'px';
+                  
+                        // Make the hidden div display:none again
+                        hiddenDiv.style.visibility = 'visible';
+                        hiddenDiv.style.display = 'none';
+                      });
                     break;
             }
 
             container.appendChild(newInput)
+
+            let errorSpan = document.createElement("span");
+            errorSpan.classList.add("errorSpan");
+            container.appendChild(errorSpan);
 
         },methodForm: (methodName) => {
             let newForm = document.createElement("form");

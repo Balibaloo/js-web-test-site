@@ -65,7 +65,7 @@ app.get("/allModules", (req,res) => {
 })
 
 let wsFunctions = {
-    isLoaded: (ws) => {
+    isModuleLoaded: (ws) => {
         ws.sendObject({
             event:customSock.responces.isLoaded,
             data:{
@@ -84,6 +84,7 @@ let wsFunctions = {
     },
     executeMethod: (ws,{methodName:methodToCall,methodArguments}) => {
         // TODO figure out a way to not log when the module logs
+        console.log("received args",methodArguments)
 
         if (activeCodeObj){
             methodArguments = parseParameters(methodArguments)
@@ -141,7 +142,11 @@ function parseParameters(params){
         if (param == ""){
             return undefined;
         } else {
-            return param;
+            try {
+                return JSON.parse(param);
+            } catch (err){
+                return param;
+            }
         }
         
     })
